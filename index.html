@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Универсальные таймеры</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div class="header-buttons">
+    <div class="theme-toggle" id="themeToggle">🌓</div>
+    <button class="admin-toggle btn btn-primary" id="toggleAdminPanel">Админ</button>
+  </div>
+
+  <div class="admin-panel hidden">
+    <h2 style="margin-top: 0;">Управление таймерами</h2>
+    <div class="form-group">
+      <label>Название:</label>
+      <input type="text" id="timerTitle" required>
+    </div>
+    <div class="form-group">
+      <label>Тип:</label>
+      <select id="timerType">
+        <option value="countdown">Обратный отсчет</option>
+        <option value="elapsed">Прошедшее время</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Дата и время:</label>
+      <input type="datetime-local" id="timerDate" required>
+    </div>
+    <input type="hidden" id="timerId">
+    <div class="timer-actions">
+      <button class="btn btn-primary" id="saveTimer">Сохранить</button>
+      <button class="btn btn-danger" id="cancelEdit">Отмена</button>
+    </div>
+  </div>
+
+  <div id="timersWrapper">
+    <div id="noTimersMessage">Нет активных таймеров. Нажмите "Админ" чтобы добавить первый таймер.</div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="script.js"></script>
+</body>
+
+</html>

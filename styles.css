@@ -1,0 +1,368 @@
+:root {
+    --bg-color: #f8f9fa;
+    --text-color: #212529;
+    --timer-bg: #ffffff;
+    --timer-border: #dee2e6;
+    --primary-color: #0d6efd;
+    --secondary-color: #198754;
+    --error-color: #dc3545;
+    --hover-bg: #e9ecef;
+    --button-text: #ffffff;
+}
+
+.dark-theme {
+    --bg-color: #121212;
+    --text-color: #e0e0e0;
+    --timer-bg: #1e1e1e;
+    --timer-border: #333;
+    --primary-color: #bb86fc;
+    --secondary-color: #03dac6;
+    --error-color: #cf6679;
+    --hover-bg: #2e2e2e;
+    --button-text: #000000;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    padding-top: 80px;
+    transition: background-color 0.3s, color 0.3s;
+    -webkit-text-size-adjust: 100%;
+}
+
+/* Шапка с кнопками */
+.header-buttons {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1001;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background: var(--bg-color);
+    padding: 6px;
+    border-radius: 24px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.theme-toggle {
+    padding: 8px;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background-color: var(--primary-color);
+    color: var(--button-text);
+    border: 1px solid var(--timer-border);
+    transition: all 0.3s;
+    font-size: 18px;
+}
+
+.admin-toggle {
+    padding: 8px 12px;
+    border-radius: 18px;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+/* Основные стили таймеров */
+.timer {
+    position: relative;
+    margin: 15px;
+    padding: 20px 15px;
+    border: 1px solid var(--timer-border);
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    background-color: var(--timer-bg);
+    transition: all 0.3s;
+    max-width: 100%;
+    width: calc(100% - 30px);
+}
+
+.timer-type-container {
+    position: relative;
+    height: 20px;
+    margin-bottom: 5px;
+}
+
+.timer-type {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--button-text);
+    display: inline-block;
+}
+
+.countdown-type {
+    background-color: var(--primary-color);
+}
+
+.elapsed-type {
+    background-color: var(--secondary-color);
+}
+
+.timer-title {
+    text-align: center;
+    margin: 5px 0 15px;
+    color: var(--text-color);
+    font-size: 1.2em;
+    padding: 0 10px;
+    word-break: break-word;
+}
+
+.timer__items {
+    display: flex;
+    justify-content: center;
+    font-size: 1.5em;
+    margin: 15px 0;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.timer__item {
+    position: relative;
+    min-width: 60px;
+    padding-bottom: 20px;
+    text-align: center;
+}
+
+.timer__item::before {
+    content: attr(data-title);
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: #6c757d;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.dark-theme .timer__item::before {
+    color: #9e9e9e;
+}
+
+.timer__item:not(:last-child)::after {
+    content: ':';
+    position: absolute;
+    right: -5px;
+    top: 0;
+    color: var(--text-color);
+}
+
+/* Стили для админ-панели */
+.admin-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--timer-bg);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.2);
+    z-index: 1000;
+    width: 90%;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 1px solid var(--timer-border);
+}
+
+.hidden {
+    display: none;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 14px;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--timer-border);
+    border-radius: 6px;
+    background-color: var(--timer-bg);
+    color: var(--text-color);
+    transition: all 0.3s;
+    font-size: 16px;
+    -webkit-appearance: none;
+}
+
+input:focus, select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+    outline: none;
+}
+
+/* Стили кнопок */
+.btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: var(--button-text);
+}
+
+.btn-primary:hover {
+    background-color: var(--hover-bg);
+    color: var(--text-color);
+    transform: translateY(-1px);
+}
+
+.btn-danger {
+    background-color: var(--error-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #bb2d3b;
+    transform: translateY(-1px);
+}
+
+/* Сообщение при отсутствии таймеров */
+#noTimersMessage {
+    text-align: center;
+    padding: 30px 20px;
+    color: #6c757d;
+    font-size: 1.1em;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.dark-theme #noTimersMessage {
+    color: #9e9e9e;
+}
+
+/* Контейнер для кнопок действий */
+.timer-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+/* Медиазапросы для адаптивности */
+@media (min-width: 321px) {
+    .timer-type-container {
+        height: auto;
+        margin-bottom: 0;
+    }
+    
+    .timer-type {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+    }
+}
+
+@media (min-width: 400px) {
+    .timer__items {
+        font-size: 1.8em;
+        gap: 10px;
+    }
+
+    .timer__item {
+        min-width: 70px;
+    }
+
+    .timer__item:not(:last-child)::after {
+        right: -8px;
+    }
+}
+
+@media (min-width: 480px) {
+    .btn {
+        padding: 10px 20px;
+        font-size: 16px;
+    }
+
+    .timer-title {
+        font-size: 1.5em;
+    }
+}
+
+@media (min-width: 768px) {
+    .timer {
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 25px;
+    }
+
+    .timer__items {
+        font-size: 2em;
+        gap: 15px;
+    }
+
+    .admin-panel {
+        width: 80%;
+        max-width: 500px;
+        padding: 25px;
+    }
+}
+
+@media (max-width: 320px) {
+    body {
+        padding-top: 70px;
+    }
+    
+    .header-buttons {
+        top: 5px;
+        right: 5px;
+    }
+    
+    .timer {
+        margin: 10px;
+        width: calc(100% - 20px);
+        padding: 15px 10px;
+    }
+    
+    .timer__items {
+        font-size: 1.2em;
+    }
+    
+    .timer__item {
+        min-width: 45px;
+        padding-bottom: 15px;
+    }
+
+    .timer__item::before {
+        font-size: 10px;
+    }
+}
+
+/* Фикс для iOS */
+@supports (-webkit-touch-callout: none) {
+    input, select {
+        font-size: 16px !important;
+    }
+}
