@@ -361,8 +361,23 @@ class TimerManager {
                     
                     // Обновляем прогресс-бар для обратного отсчета
                     if (timer.type === 'countdown' && time.progress !== null) {
-                        timerElement.find('.progress-fill').css('width', `${time.progress}%`);
-                        timerElement.find('.progress-text').text(time.progressText);
+                        const $progressFill = timerElement.find('.progress-fill');
+                        const $progressText = timerElement.find('.progress-text');
+                        
+                        // Принудительно устанавливаем стили
+                        $progressFill.css({
+                            'width': `${time.progress}%`,
+                            'height': '100%',
+                            'min-height': '8px',
+                            'display': 'block'
+                        });
+                        
+                        $progressText.text(time.progressText);
+                        
+                        // Отладочная информация для сервера
+                        if (time.progress > 0) {
+                            console.log(`Прогресс ${timer.title}: ${time.progress}% - ${time.progressText}`);
+                        }
                     }
                 },
                 () => {
