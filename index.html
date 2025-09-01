@@ -14,27 +14,57 @@
     <button class="admin-toggle btn btn-primary" id="toggleAdminPanel">Админ</button>
   </div>
 
-  <div class="admin-panel hidden">
+  <!-- Форма авторизации для админ панели -->
+  <div class="auth-panel hidden" id="authPanel">
+    <div class="auth-form">
+      <h2>Авторизация администратора</h2>
+      <div class="form-group">
+        <label>Логин:</label>
+        <input type="text" id="adminLogin" placeholder="admin" required>
+      </div>
+      <div class="form-group">
+        <label>Пароль:</label>
+        <input type="password" id="adminPassword" placeholder="password" required>
+      </div>
+      <div class="auth-actions">
+        <button class="btn btn-primary" id="loginBtn">Войти</button>
+        <button class="btn btn-secondary" id="cancelAuth">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-panel hidden" id="adminPanel">
     <h2 style="margin-top: 0;">Управление таймерами</h2>
-    <div class="form-group">
-      <label>Название:</label>
-      <input type="text" id="timerTitle" required>
+    
+    <!-- Форма добавления/редактирования таймера -->
+    <div class="form-section">
+      <h3>Добавить/Изменить таймер</h3>
+      <div class="form-group">
+        <label>Название:</label>
+        <input type="text" id="timerTitle" required>
+      </div>
+      <div class="form-group">
+        <label>Тип:</label>
+        <select id="timerType">
+          <option value="countdown">Обратный отсчет</option>
+          <option value="elapsed">Прошедшее время</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Дата и время:</label>
+        <input type="datetime-local" id="timerDate" required>
+      </div>
+      <input type="hidden" id="timerId">
+      <div class="timer-actions">
+        <button class="btn btn-primary" id="saveTimer">Сохранить</button>
+        <button class="btn btn-danger" id="cancelEdit">Отмена</button>
+      </div>
     </div>
-    <div class="form-group">
-      <label>Тип:</label>
-      <select id="timerType">
-        <option value="countdown">Обратный отсчет</option>
-        <option value="elapsed">Прошедшее время</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Дата и время:</label>
-      <input type="datetime-local" id="timerDate" required>
-    </div>
-    <input type="hidden" id="timerId">
-    <div class="timer-actions">
-      <button class="btn btn-primary" id="saveTimer">Сохранить</button>
-      <button class="btn btn-danger" id="cancelEdit">Отмена</button>
+
+    <!-- Список существующих таймеров -->
+    <div class="timers-list-section">
+      <h3>Существующие таймеры</h3>
+      <div id="adminTimersList"></div>
     </div>
   </div>
 

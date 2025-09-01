@@ -1,7 +1,8 @@
 class CountdownTimer {
-    constructor(targetDate, updateCallback, completeCallback, type = 'countdown') {
+    constructor(targetDate, updateCallback, completeCallback, type = 'countdown', creationDate = null) {
         this.type = type;
         this.targetDate = new Date(targetDate);
+        this.creationDate = creationDate ? new Date(creationDate) : new Date();
         this.updateCallback = updateCallback;
         this.completeCallback = completeCallback;
         this.interval = null;
@@ -32,6 +33,27 @@ class CountdownTimer {
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
+        // Вычисляем прогресс для обратного отсчета
+        let progress = null;
+        let progressText = '';
+        
+        if (this.type === 'countdown') {
+            const totalDuration = this.targetDate - this.creationDate;
+            const elapsed = now - this.creationDate;
+            const remaining = this.targetDate - now;
+            
+            if (totalDuration > 0 && remaining > 0) {
+                // Прогресс показывает процент прошедшего времени
+                progress = Math.max(0, Math.min(100, (elapsed / totalDuration) * 100));
+                const remainingPercent = Math.max(0, Math.min(100, (remaining / totalDuration) * 100));
+                progressText = `Осталось: ${remainingPercent.toFixed(1)}%`;
+            } else if (remaining <= 0) {
+                // Таймер завершен
+                progress = 100;
+                progressText = 'Завершено!';
+            }
+        }
+
         this.updateCallback({
             days: days.toString().padStart(2, '0'),
             hours: hours.toString().padStart(2, '0'),
@@ -40,7 +62,9 @@ class CountdownTimer {
             daysLabel: CountdownTimer.formatTime(days, ['день', 'дня', 'дней']),
             hoursLabel: CountdownTimer.formatTime(hours, ['час', 'часа', 'часов']),
             minutesLabel: CountdownTimer.formatTime(minutes, ['минута', 'минуты', 'минут']),
-            secondsLabel: CountdownTimer.formatTime(seconds, ['секунда', 'секунды', 'секунд'])
+            secondsLabel: CountdownTimer.formatTime(seconds, ['секунда', 'секунды', 'секунд']),
+            progress: progress,
+            progressText: progressText
         });
 
         if (this.type === 'countdown' && diff <= 0) {
@@ -57,12 +81,114 @@ class CountdownTimer {
 class TimerManager {
     constructor() {
         this.timers = {};
+        this.isAuthenticated = false;
+        this.adminCredentials = {
+            username: 'admin',
+            password: 'password'
+        };
         this.loadTimers();
+        this.initAuth();
         this.initAdminPanel();
         this.initTheme();
         this.renderTimers();
         this.addTouchEvents();
         this.fixViewportHeight();
+    }
+
+    initAuth() {
+        $('#toggleAdminPanel').on('click', () => {
+            if (this.isAuthenticated) {
+                this.showAdminPanel();
+            } else {
+                this.showAuthPanel();
+            }
+        });
+
+        $('#loginBtn').on('click', () => this.authenticate());
+        $('#cancelAuth').on('click', () => this.hideAuthPanel());
+        
+        // Обработка Enter в полях авторизации
+        $('#adminLogin, #adminPassword').on('keypress', (e) => {
+            if (e.which === 13) {
+                this.authenticate();
+            }
+        });
+    }
+
+    authenticate() {
+        const username = $('#adminLogin').val().trim();
+        const password = $('#adminPassword').val().trim();
+
+        if (username === this.adminCredentials.username && password === this.adminCredentials.password) {
+            this.isAuthenticated = true;
+            this.hideAuthPanel();
+            this.showAdminPanel();
+            $('#adminLogin, #adminPassword').val('');
+        } else {
+            alert('Неверный логин или пароль!');
+            $('#adminPassword').val('').focus();
+        }
+    }
+
+    showAuthPanel() {
+        $('#authPanel').removeClass('hidden');
+        $('#adminLogin').focus();
+    }
+
+    hideAuthPanel() {
+        $('#authPanel').addClass('hidden');
+    }
+
+    showAdminPanel() {
+        $('#adminPanel').removeClass('hidden');
+        $('body').addClass('no-scroll');
+        this.renderAdminTimersList();
+    }
+
+    hideAdminPanel() {
+        $('#adminPanel').addClass('hidden');
+        $('body').removeClass('no-scroll');
+    }
+
+    renderAdminTimersList() {
+        const $adminList = $('#adminTimersList');
+        $adminList.empty();
+
+        if (Object.keys(this.timers).length === 0) {
+            $adminList.html('<p style="text-align: center; color: #6c757d; font-style: italic;">Нет сохраненных таймеров</p>');
+            return;
+        }
+
+        Object.values(this.timers).forEach(timer => {
+            const timerDate = new Date(timer.date);
+            const formattedDate = timerDate.toLocaleString('ru-RU', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            const timerElement = $(`
+                <div class="admin-timer-item">
+                    <div class="admin-timer-info">
+                        <div class="admin-timer-title">${timer.title}</div>
+                        <div class="admin-timer-details">
+                            ${timer.type === 'countdown' ? 'Обратный отсчет' : 'Прошедшее время'} • ${formattedDate}
+                        </div>
+                    </div>
+                    <div class="admin-timer-actions">
+                        <button class="btn btn-primary edit-admin-btn" data-id="${timer.id}">Изменить</button>
+                        <button class="btn btn-danger delete-admin-btn" data-id="${timer.id}">Удалить</button>
+                    </div>
+                </div>
+            `);
+
+            timerElement.find('.edit-admin-btn').on('click', () => this.editTimer(timer));
+            timerElement.find('.delete-admin-btn').on('click', () => this.deleteTimer(timer.id));
+
+            $adminList.append(timerElement);
+        });
     }
 
     initTheme() {
@@ -81,6 +207,20 @@ class TimerManager {
         const saved = localStorage.getItem('timers');
         if (saved) {
             this.timers = JSON.parse(saved);
+            
+            // Миграция: исправляем createdAt на creationDate
+            let needsSave = false;
+            Object.keys(this.timers).forEach(key => {
+                if (this.timers[key].createdAt && !this.timers[key].creationDate) {
+                    this.timers[key].creationDate = this.timers[key].createdAt;
+                    delete this.timers[key].createdAt;
+                    needsSave = true;
+                }
+            });
+            
+            if (needsSave) {
+                this.saveTimers();
+            }
         } else {
             // Примеры таймеров по умолчанию
             this.timers = {
@@ -88,13 +228,15 @@ class TimerManager {
                     id: 'timer1',
                     title: 'Новый Год 2025',
                     date: new Date('2025-01-01T00:00:00').toISOString(),
-                    type: 'countdown'
+                    type: 'countdown',
+                    creationDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() // неделю назад
                 },
                 timer2: {
                     id: 'timer2',
                     title: 'Старт проекта',
                     date: new Date(Date.now() - 86400000).toISOString(),
-                    type: 'elapsed'
+                    type: 'elapsed',
+                    creationDate: new Date(Date.now() - 86400000).toISOString()
                 }
             };
             this.saveTimers();
@@ -106,17 +248,10 @@ class TimerManager {
     }
 
     initAdminPanel() {
-        const $adminPanel = $('.admin-panel');
-        
-        $('#toggleAdminPanel').on('click', () => {
-            $adminPanel.toggleClass('hidden');
-            $('body').toggleClass('no-scroll', !$adminPanel.hasClass('hidden'));
-        });
-        
         $('#saveTimer').on('click', () => this.saveTimer());
         $('#cancelEdit').on('click', () => {
-            $adminPanel.addClass('hidden');
-            $('body').removeClass('no-scroll');
+            this.hideAdminPanel();
+            this.clearForm();
         });
     }
 
@@ -157,7 +292,8 @@ class TimerManager {
             id: id || `timer${Date.now()}`,
             title,
             type,
-            date: new Date(date).toISOString()
+            date: new Date(date).toISOString(),
+            creationDate: id ? this.timers[id]?.creationDate : new Date().toISOString()
         };
 
         if (id) {
@@ -168,16 +304,16 @@ class TimerManager {
 
         this.saveTimers();
         this.renderTimers();
-        this.cancelEdit();
+        this.renderAdminTimersList();
+        this.hideAdminPanel();
+        this.clearForm();
     }
 
-    cancelEdit() {
+    clearForm() {
         $('#timerId').val('');
         $('#timerTitle').val('');
         $('#timerDate').val('');
         $('#timerType').val('countdown');
-        $('.admin-panel').addClass('hidden');
-        $('body').removeClass('no-scroll');
     }
 
     deleteTimer(id) {
@@ -185,6 +321,7 @@ class TimerManager {
             delete this.timers[id];
             this.saveTimers();
             this.renderTimers();
+            this.renderAdminTimersList();
         }
     }
 
@@ -201,21 +338,15 @@ class TimerManager {
                         </div>
                     </div>
                     <h2 class="timer-title">${timer.title}</h2>
+                    ${timer.type === 'countdown' ? '<div class="progress-container"><div class="progress-bar"><div class="progress-fill"></div></div><div class="progress-text"></div></div>' : ''}
                     <div class="timer__items">
                         <div class="timer__item" data-title="дней">00</div>
                         <div class="timer__item" data-title="часов">00</div>
                         <div class="timer__item" data-title="минут">00</div>
                         <div class="timer__item" data-title="секунд">00</div>
                     </div>
-                    <div class="timer-actions">
-                        <button class="btn btn-danger delete-btn">Удалить</button>
-                        <button class="btn btn-primary edit-btn">Изменить</button>
-                    </div>
                 </div>
             `);
-
-            timerElement.find('.delete-btn').on('click', () => this.deleteTimer(timer.id));
-            timerElement.find('.edit-btn').on('click', () => this.editTimer(timer));
 
             $('#timersWrapper').append(timerElement);
 
@@ -227,11 +358,18 @@ class TimerManager {
                     items.eq(1).text(time.hours).attr('data-title', time.hoursLabel);
                     items.eq(2).text(time.minutes).attr('data-title', time.minutesLabel);
                     items.eq(3).text(time.seconds).attr('data-title', time.secondsLabel);
+                    
+                    // Обновляем прогресс-бар для обратного отсчета
+                    if (timer.type === 'countdown' && time.progress !== null) {
+                        timerElement.find('.progress-fill').css('width', `${time.progress}%`);
+                        timerElement.find('.progress-text').text(time.progressText);
+                    }
                 },
                 () => {
                     timerElement.append('<div class="timer-complete">Завершено!</div>');
                 },
-                timer.type
+                timer.type,
+                timer.creationDate
             );
         });
     }
@@ -248,8 +386,7 @@ class TimerManager {
             .slice(0, 16);
         
         $('#timerDate').val(formattedDate);
-        $('.admin-panel').removeClass('hidden');
-        $('body').addClass('no-scroll');
+        this.showAdminPanel();
     }
 }
 
@@ -259,7 +396,6 @@ $(document).ready(() => {
     
     // Показать админ-панель если нет сохраненных таймеров
     if (localStorage.getItem('timers') === null) {
-        $('.admin-panel').removeClass('hidden');
-        $('body').addClass('no-scroll');
+        timerManager.showAuthPanel();
     }
 });
